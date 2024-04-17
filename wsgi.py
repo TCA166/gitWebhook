@@ -1,4 +1,4 @@
-from src.pullerWebhook import pullerWebhookBlueprint
+from src import pullerWebhookBlueprint
 from flask import Flask
 import json
 

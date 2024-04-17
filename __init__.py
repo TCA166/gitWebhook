@@ -1,6 +1,5 @@
-from src.webhook import webhookBlueprint
-from src.abstractWebhook import gitWebhookBlueprintABC
-from src.pullerWebhook import pullerWebhookBlueprint
-from src.functionWebhook import functionWebhookBlueprint
+"""Locally defined gitWebhook module."""
+
+from src import *
 
 __all__ = ["webhookBlueprint", "gitWebhookBlueprintABC", "pullerWebhookBlueprint", "functionWebhookBlueprint"]

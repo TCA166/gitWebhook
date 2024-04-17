@@ -19,6 +19,3 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/TCA166/gitWebhook"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
