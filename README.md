@@ -31,6 +31,10 @@ However due to the open ended nature of the blueprint this behavior can be easil
         pip install -r gitWebhook/requirements.txt
         ```
 
+    While installing the pip package functions as any other package the thing with this repo folder is that it functions like a local package.
+    That means that cloning this repo into your project folder will allow you to import ```gitWebhook``` as if it was installed via pip.
+    Same applies with adding as submodule with the added benefit of git understanding what is going on better,
+
 3. Create an instance of ```webhookBlueprint``` (or either of it's subclasses) with your settings
 
     ```python3

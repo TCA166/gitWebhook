@@ -1,12 +1,13 @@
 from logging import Logger
 from typing import Any
 from unittest import TestSuite
-from gitWebhook.webhook import webhookBlueprint
+from .webhook import webhookBlueprint
 from subprocess import run
 from unittest import TestSuite, TestResult
 
 class pullerWebhookBlueprint(webhookBlueprint):
     """A subclass of webhookBlueprint that processes the webhook data by pulling from a git repository and running tests."""
+    
     def __init__(self, webhookToken: str | None, tests: TestSuite | None = None, log: Logger | None = None, name: str = "webhook", gitCommand: str = "/usr/bin/git", commandEnv: dict[str, str] | None = None, *args, **kwargs):
         super().__init__(webhookToken, log, name, *args, **kwargs)
         self.tests = tests
@@ -14,6 +15,7 @@ class pullerWebhookBlueprint(webhookBlueprint):
         if commandEnv is None:
             commandEnv = dict(GIT_SSH_COMMAND="/usr/bin/ssh")
         self.commandEnv = commandEnv
+    
     def processWebhook(self, data: dict[str, Any]) -> tuple[int, str]:
         if self.log is not None:
             self.log.debug(f"Processing webhook: {data}")

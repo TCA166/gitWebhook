@@ -3,7 +3,7 @@ from hashlib import sha256
 from hmac import new as hmacNew
 from typing import Any
 from logging import Logger
-from gitWebhook.abstractWebhook import gitWebhookBlueprintABC
+from .abstractWebhook import gitWebhookBlueprintABC
 
 GITHUB_HEADER = "X-Hub-Signature-256"
 
@@ -24,6 +24,7 @@ def verifyGitlabRequest(request: Request, token:str) -> bool:
 
 class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
     """Wrapper over the flask blueprint that creates an endpoint for receiving and processing git webhooks. Overwrite the processWebhook method to process the webhook data."""
+    
     def __init__(self, webhookToken:str | None, log:Logger | None = None, name:str="webhook", *args, **kwargs):
         super().__init__(name, self.__class__.__name__, *args, **kwargs)
         self.log = log
@@ -32,6 +33,7 @@ class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
                 self.log.warning("No webhook token provided. THIS IS VERY UNSAFE")
         self.webhookToken = webhookToken
         self.route("/", methods=["POST"])(self.receiveWebhook)
+    
     def receiveWebhook(self) -> Response:
         """Receive webhook from GitHub and process it using the processWebhook method."""
         if self.log is not None:
@@ -67,6 +69,7 @@ class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
         if self.log is not None:
             self.log.info(f"Webhook processed with status code {ret[0]} and message: {ret[1]}")
         return Response(ret[1], status=ret[0])
+    
     def processWebhook(self, data:dict[str, Any]) -> tuple[int, str]:
         """Process the webhook. Return a tuple of (status code, message)"""
         return (200, "OK")
