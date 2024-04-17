@@ -1,5 +1,5 @@
 import unittest
-from flask import Request, request, Flask
+from flask import Request, Flask
 from gitWebhook.webhook import verifyGithubRequest, verifyGitlabRequest, webhookBlueprint
 from gitWebhook.functionWebhook import functionWebhookBlueprint
 import random
@@ -13,6 +13,7 @@ class testingRequest(Request):
         self.data = random.randbytes(50)
         hash_object = hmacNew(token.encode("utf-8"), msg=self.data, digestmod=sha256)
         self.headers = {"X-Hub-Signature-256": f"sha256={hash_object.hexdigest()}", "X-Gitlab-Token":token}
+        
     def get_data(self):
         return self.data
 
@@ -21,15 +22,19 @@ class TestVerification(unittest.TestCase):
         self.validRequest = testingRequest(VALID_TOKEN)
         self.invalidRequest = testingRequest("12345")
         return super().setUp()
+    
     def testVerifyGithubRequest(self):
         self.assertTrue(verifyGithubRequest(self.validRequest, VALID_TOKEN))
         self.assertFalse(verifyGithubRequest(self.validRequest, "12345"))
         self.assertFalse(verifyGithubRequest(self.invalidRequest, VALID_TOKEN))
         self.assertFalse(verifyGithubRequest(self.invalidRequest, "12346"))
+        
     def testVerifyGitlabRequest(self):
         self.assertTrue(verifyGitlabRequest(self.validRequest, "1234"))
         self.assertFalse(verifyGitlabRequest(self.validRequest, "12345"))
         self.assertFalse(verifyGitlabRequest(self.invalidRequest, "1234"))
+
+# TODO add tests for basic auth
 
 class TestWehbookBlueprint(unittest.TestCase):
     def setUp(self) -> None:
@@ -41,13 +46,25 @@ class TestWehbookBlueprint(unittest.TestCase):
         self.app.config.update({"TESTING": True})
         self.client = self.app.test_client()
         return super().setUp()
-    def testReceiveWebhookValid(self):
+    
+    def testReceiveWebhookValidGithub(self):
         request = testingRequest(VALID_TOKEN)
-        resp = self.client.post("/valid/", headers=request.headers, data=request.data)
+        limitedHeaders = {"X-Hub-Signature-256":request.headers["X-Hub-Signature-256"]}
+        resp = self.client.post("/valid/", headers=limitedHeaders, data=request.data)
         self.assertEqual(resp.status_code, 415)
-        request.headers["Content-Type"] = "application/json"
-        resp = self.client.post("/valid/", headers=request.headers, data=request.data)
+        limitedHeaders["Content-Type"] = "application/json"
+        resp = self.client.post("/valid/", headers=limitedHeaders, data=request.data)
         self.assertEqual(resp.status_code, 400) #no json
+        
+    def testReceiveWebhookValidGitlab(self):
+        request = testingRequest(VALID_TOKEN)
+        limitedHeaders = {"X-Gitlab-Token":request.headers["X-Gitlab-Token"]}
+        resp = self.client.post("/valid/", headers=limitedHeaders, data=request.data)
+        self.assertEqual(resp.status_code, 415)
+        limitedHeaders["Content-Type"] = "application/json"
+        resp = self.client.post("/valid/", headers=limitedHeaders, data=request.data)
+        self.assertEqual(resp.status_code, 400)
+    
     def testReceiveWebhookInvalidNoCheck(self):
         request = testingRequest("123")
         resp = self.client.post("/noToken/", headers=request.headers, data=request.data)
@@ -55,13 +72,25 @@ class TestWehbookBlueprint(unittest.TestCase):
         request.headers["Content-Type"] = "application/json"
         resp = self.client.post("/noToken/", headers=request.headers, data=request.data)
         self.assertEqual(resp.status_code, 400)
-    def testReceiveWebhookInvalidCheck(self):
+        
+    def testReceiveWebhookInvalidCheckGithub(self):
         request = testingRequest("123")
-        resp = self.client.post("/valid/", headers=request.headers, data=request.data)
+        limitedHeaders = {"X-Hub-Signature-256":request.headers["X-Hub-Signature-256"]}
+        resp = self.client.post("/valid/", headers=limitedHeaders, data=request.data)
         self.assertEqual(resp.status_code, 415)
-        request.headers["Content-Type"] = "application/json"
-        resp = self.client.post("/valid/", headers=request.headers, data=request.data)
+        limitedHeaders["Content-Type"] = "application/json"
+        resp = self.client.post("/valid/", headers=limitedHeaders, data=request.data)
         self.assertEqual(resp.status_code, 401)
+    
+    def testReceiveWebhookInvalidCheckGitlab(self):
+        request = testingRequest("123")
+        limitedHeaders = {"X-Gitlab-Token":request.headers["X-Gitlab-Token"]}
+        resp = self.client.post("/valid/", headers=limitedHeaders, data=request.data)
+        self.assertEqual(resp.status_code, 415)
+        limitedHeaders["Content-Type"] = "application/json"
+        resp = self.client.post("/valid/", headers=limitedHeaders, data=request.data)
+        self.assertEqual(resp.status_code, 401)
+
     def testProcessWebhook(self):
         self.assertEqual(self.webhook.processWebhook({"test":"test"}), (200, "OK"))
         self.assertEqual(self.webhookNoToken.processWebhook({"test":"test"}), (200, "OK"))
@@ -75,6 +104,7 @@ class TestFunctionWebhookBlueprint(unittest.TestCase):
         self.app.config.update({"TESTING": True})
         self.client = self.app.test_client()
         return super().setUp()
+    
     def testReceiveWebhookValid(self):
         request = testingRequest(VALID_TOKEN)
         resp = self.client.post("/valid/", headers=request.headers, data=request.data)
@@ -82,6 +112,7 @@ class TestFunctionWebhookBlueprint(unittest.TestCase):
         request.headers["Content-Type"] = "application/json"
         resp = self.client.post("/valid/", headers=request.headers, data=request.data)
         self.assertEqual(resp.status_code, 400) #no json
+        
     def testReceiveWebhookInvalidCheck(self):
         request = testingRequest("123")
         resp = self.client.post("/valid/", headers=request.headers, data=request.data)
@@ -89,6 +120,7 @@ class TestFunctionWebhookBlueprint(unittest.TestCase):
         request.headers["Content-Type"] = "application/json"
         resp = self.client.post("/valid/", headers=request.headers, data=request.data)
         self.assertEqual(resp.status_code, 401)
+        
     def testProcessWebhook(self):
         self.assertEqual(self.webhook.processWebhook({"test":"test"}), (400, "Function <lambda> returned false"))
 

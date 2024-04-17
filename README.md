@@ -1,6 +1,6 @@
 # gitWebhook
 
-A Python library providing [Flask blueprints](https://flask.palletsprojects.com/en/3.0.x/blueprints/) for receiving GitHub or GitLab webhooks and acting upon them.
+A Python library providing [Flask blueprints](https://flask.palletsprojects.com/en/3.0.x/blueprints/) for receiving GitHub, GitLab or Gitea webhooks and acting upon them.
 The library provides webhooks allowing for automatic deployment, testing and integrations.
 However due to the open ended nature of the blueprint this behavior can be easily customized thanks to the very open ended class dependency tree.
 
@@ -9,7 +9,7 @@ However due to the open ended nature of the blueprint this behavior can be easil
 1. Setup the webhook on the git side
    During the setup be sure to pay close attention to any opportunities to input any sort of secret key.
    You will need that key later if you want to enable webhook verification **THIS IS SOMETHING THAT I GREATLY ADVISE YOU DO**.
-   For GitHub that would be the secret string that you provide [during creation](https://docs.github.com/en/webhooks/using-webhooks/creating-webhooks#creating-a-repository-webhook) and for GitLab that would be the [secret token](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#validate-payloads-by-using-a-secret-token).
+   For GitHub that would be the secret string that you provide [during creation](https://docs.github.com/en/webhooks/using-webhooks/creating-webhooks#creating-a-repository-webhook), for GitLab that would be the [secret token](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#validate-payloads-by-using-a-secret-token) and for Gitea that would be the [authorization token](https://docs.gitea.com/usage/webhooks#authorization-header).
 2. Install this package
     - Using pip
 

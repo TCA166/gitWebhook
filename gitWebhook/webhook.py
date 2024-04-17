@@ -22,6 +22,8 @@ def verifyGitlabRequest(request: Request, token:str) -> bool:
     """Verify the GitLab token of a webhook request"""
     return request.headers.get(GITLAB_HEADER) == token
 
+# TODO add IP whitelisting, limiting to one git type, automatic github IP whitelisting
+
 class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
     """Wrapper over the flask blueprint that creates an endpoint for receiving and processing git webhooks. Overwrite the processWebhook method to process the webhook data."""
     
@@ -47,12 +49,17 @@ class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
             if GITHUB_HEADER in request.headers:
                 if not verifyGithubRequest(request, self.webhookToken):
                     if self.log is not None:
-                        self.log.warning("A request with an invalid GitHub signature")
+                        self.log.warning("A request with an invalid GitHub signaturez")
                     abort(401)
-            elif GITLAB_HEADER:
+            elif GITLAB_HEADER in request.headers:
                 if not verifyGitlabRequest(request, self.webhookToken):
                     if self.log is not None:
                         self.log.warning("A request with an invalid GitLab token")
+                    abort(401)
+            elif request.authorization is not None: # basic authorization which is what Gitea uses
+                if not str(request.authorization) == self.webhookToken:
+                    if self.log is not None:
+                        self.log.warning("A request with an invalid basic authorization")
                     abort(401)
             else:
                 if self.log is not None:
