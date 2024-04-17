@@ -21,7 +21,7 @@ def verifyGithubSignature(request: Request, token:str) -> bool:
 
 class webhookBlueprint(Blueprint):
     """Wrapper over the flask blueprint that creates an endpoint for receiving and processing git webhooks. Overwrite the processWebhook method to process the webhook data."""
-    def __init__(self, webhookToken:str | None, tests:TestSuite | None = None, log:Logger | None = None, name:str="webhook", import_name:str=__name__, gitCommand:str="/usr/bin/git", commandEnv:dict | None = None, *args, **kwargs):
+    def __init__(self, webhookToken:str | None, tests:TestSuite | None = None, log:Logger | None = None, name:str="webhook", import_name:str=__name__, gitCommand:str="/usr/bin/git", commandEnv:dict[str, str] | None = None, *args, **kwargs):
         super().__init__(name, import_name, *args, **kwargs)
         self.log = log
         if webhookToken is None:

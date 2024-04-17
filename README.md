@@ -11,7 +11,7 @@ However due to the open ended nature of the blueprint this behavior can be easil
    During the setup be sure to pay close attention to any opportunities to input any sort of secret key.
    You will need that key later if you want to enable webhook verification **THIS IS SOMETHING THAT I GREATLY ADVISE YOU DO**.
    For GitHub that would be the secret string that you provide [during creation](https://docs.github.com/en/webhooks/using-webhooks/creating-webhooks#creating-a-repository-webhook) and for GitLab that would be the [secret token](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#validate-payloads-by-using-a-secret-token).
-2. Clone this repo
+2. Clone this repo or add it as a submodule
 3. Install packages from requirements.txt
 4. Create an instance of ```webhookBlueprint``` with your settings
 5. Register the instance within a Flask app of your choice

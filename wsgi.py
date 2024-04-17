@@ -1,4 +1,4 @@
-from webhook import webhookBlueprint
+from src.webhook import webhookBlueprint
 from flask import Flask
 import json
 

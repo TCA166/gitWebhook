@@ -1,2 +1,5 @@
 .vscode/
 tokens.json
+build*
+*.egg-info/
+__pycache__/
