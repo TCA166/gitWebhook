@@ -11,10 +11,43 @@ However due to the open ended nature of the blueprint this behavior can be easil
    During the setup be sure to pay close attention to any opportunities to input any sort of secret key.
    You will need that key later if you want to enable webhook verification **THIS IS SOMETHING THAT I GREATLY ADVISE YOU DO**.
    For GitHub that would be the secret string that you provide [during creation](https://docs.github.com/en/webhooks/using-webhooks/creating-webhooks#creating-a-repository-webhook) and for GitLab that would be the [secret token](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#validate-payloads-by-using-a-secret-token).
-2. Clone this repo or add it as a submodule
-3. Install packages from requirements.txt
-4. Create an instance of ```webhookBlueprint``` with your settings
-5. Register the instance within a Flask app of your choice
+2. Install this package
+    - Using pip
+
+        ```sh
+        pip install gitAppWebhook
+        ```
+
+    - By cloning the repository
+
+        ```sh
+        git clone https://github.com/TCA166/gitWebhook.git
+        pip install -r gitWebhook/requirements.txt
+        ```
+
+    - By including this repo as a submodule
+
+        ```sh
+        git submodule add https://github.com/example/repo.git gitWebhook
+        pip install -r gitWebhook/requirements.txt
+        ```
+
+3. Create an instance of ```webhookBlueprint``` with your settings
+
+    ```python3
+    import gitWebhook
+
+    wb = gitWebhook.webhookBlueprint(token, url_prefix="/")
+    ```
+
+4. Register the instance within a Flask app of your choice
+
+    ```python3
+    from flask import Flask
+
+    app = Flask(__name__)
+    app.register_blueprint(wb)
+    ```
 
 If you are lost you can always look at official GitHub resources, or look at [wsgi.py](./wsgi.py) where an example configured Flask webapp is located.
 

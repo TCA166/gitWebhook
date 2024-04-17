@@ -1,5 +1,5 @@
 [project]
-name = "gitWebhook"
+name = "gitAppWebhook"
 version = "0.1"
 authors = [
   { name="TCA", email="tca.youtub@gmail.com" },
@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: CC BY 4.0 Attribution",
+    "License :: Free To Use But Restricted",
     "Operating System :: OS Independent",
 ]
 dependencies = [
