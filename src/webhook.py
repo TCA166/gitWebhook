@@ -1,10 +1,9 @@
 from flask import Blueprint, request, Response, abort, Request
 from hashlib import sha256
 from hmac import new as hmacNew
-from subprocess import run
-from unittest import TestSuite, TestResult
 from typing import Any
 from logging import Logger
+from src.abstractWebhook import gitWebhookBlueprintABC
 
 GITHUB_HEADER = "X-Hub-Signature-256"
 
@@ -19,20 +18,15 @@ def verifyGithubSignature(request: Request, token:str) -> bool:
     expected_signature = "sha256=" + hash_object.hexdigest()
     return signature == expected_signature
 
-class webhookBlueprint(Blueprint):
+class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
     """Wrapper over the flask blueprint that creates an endpoint for receiving and processing git webhooks. Overwrite the processWebhook method to process the webhook data."""
-    def __init__(self, webhookToken:str | None, tests:TestSuite | None = None, log:Logger | None = None, name:str="webhook", import_name:str=__name__, gitCommand:str="/usr/bin/git", commandEnv:dict[str, str] | None = None, *args, **kwargs):
-        super().__init__(name, import_name, *args, **kwargs)
+    def __init__(self, webhookToken:str | None, log:Logger | None = None, name:str="webhook", *args, **kwargs):
+        super().__init__(name, self.__class__.__name__, *args, **kwargs)
         self.log = log
         if webhookToken is None:
             if self.log is not None:
                 self.log.warning("No webhook token provided. THIS IS VERY UNSAFE")
         self.webhookToken = webhookToken
-        self.tests = tests
-        self.gitCommand = gitCommand
-        if commandEnv is None:
-            commandEnv = dict(GIT_SSH_COMMAND="/usr/bin/ssh")
-        self.commandEnv = commandEnv
         self.route("/", methods=["POST"])(self.receiveWebhook)
     def receiveWebhook(self) -> Response:
         """Receive webhook from GitHub and process it using the processWebhook method."""
@@ -71,32 +65,4 @@ class webhookBlueprint(Blueprint):
         return Response(ret[1], status=ret[0])
     def processWebhook(self, data:dict[str, Any]) -> tuple[int, str]:
         """Process the webhook. Return a tuple of (status code, message)"""
-        if self.log is not None:
-            self.log.debug(f"Processing webhook: {data}")
-        process = run([self.gitCommand, "pull"], env=self.commandEnv)
-        if process.returncode != 0:
-            if self.log is not None:
-                self.log.error(f"Error while pulling: {process.stderr.decode('utf-8')}")
-            return 500, process.stderr.decode("utf-8")
-        if self.tests is not None:
-            if self.log is not None:
-                self.log.debug("Running tests")
-            result = TestResult()
-            self.tests.run(result) # Why does this method want a TestResult object? Why can't it just return the result?
-            if result.wasSuccessful():
-                if self.log is not None:
-                    self.log.info(f"{result.testsRun} tests passed ")
-                return 200, "Tests passed"
-            else:
-                abortProcess = run([self.gitCommand, "merge", "--abort"], env=self.commandEnv)
-                if self.log is not None:
-                    self.log.error(f"Tests did not pass, Errors: {result.errors}, Failures: {result.failures}. Merge abort status: {abortProcess.returncode}")
-                return 428, f"Tests did not pass, Errors: {result.errors}, Failures: {result.failures}. Merge abort status: {abortProcess.returncode}"
-        else:
-            return 200, "Webhook received successfully"
-        
-if __name__ == "__main__":
-    from flask import Flask
-    app = Flask(__name__)
-    app.register_blueprint(webhookBlueprint("token"))
-    app.run()
+        return (200, "OK")

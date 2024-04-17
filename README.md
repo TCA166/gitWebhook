@@ -1,9 +1,8 @@
 # githubWebhook
 
-A Flask blueprint for receiving GitHub or GitLab webhooks and acting upon them.
-By default the blueprint performs a git pull and optionally ```unittest.testSuite``` tests upon receiving a valid webhook request.
-The idea behind this is to allow for automatic testing or deployment without using GitHub Actions.
-However due to the open ended nature of the blueprint this behavior can be easily customized.
+A Python library providing [Flask blueprints](https://flask.palletsprojects.com/en/3.0.x/blueprints/) for receiving GitHub or GitLab webhooks and acting upon them.
+The library provides webhooks allowing for automatic deployment, testing and integrations.
+However due to the open ended nature of the blueprint this behavior can be easily customized thanks to the very open ended class dependency tree.
 
 ## Setup
 
@@ -32,7 +31,7 @@ However due to the open ended nature of the blueprint this behavior can be easil
         pip install -r gitWebhook/requirements.txt
         ```
 
-3. Create an instance of ```webhookBlueprint``` with your settings
+3. Create an instance of ```webhookBlueprint``` (or either of it's subclasses) with your settings
 
     ```python3
     import gitWebhook
@@ -51,11 +50,26 @@ However due to the open ended nature of the blueprint this behavior can be easil
 
 If you are lost you can always look at official GitHub resources, or look at [wsgi.py](./wsgi.py) where an example configured Flask webapp is located.
 
-## webhookBlueprint class
+## Blueprint classes
 
-The webhook receiving behavior was packaged together as a single class derived from the Flask blueprint class.
+This library provides a basic blueprint derived class for only receiving webhooks and a few derived classes with different webhook processing capabilities.
 
-### Default behavior
+### webhookBlueprint
+
+This very basic class itself has no webhook processing capabilities, but functions as a base from which webhook receiving blueprints may be derived from.
+It fully implements all the verification required for GitHub and GitLab blueprints and as such should be the class you should derive from.
+
+#### webhookBlueprint behavior
+
+1. Verifies the request's validity (Optional but very recommended)
+2. Returns 200
+
+### pullerWebhookBlueprint
+
+This class derived from ```webhookBlueprint``` is aimed to be used as a means of automating deployment and testing on servers.
+If you don't want to use GitHub actions, you can always use a Flask app with this blueprint registered.
+
+#### pullerWebhookBlueprint behavior
 
 Upon receiving a ```POST``` request to the / endpoint the blueprint:
 
@@ -65,18 +79,32 @@ Upon receiving a ```POST``` request to the / endpoint the blueprint:
     1. If the tests failed it tries to revert the pull
 4. Returns to GitHub or GitLab the results of the pull and tests if they have been performed
 
+### functionWebhookBlueprint
+
+This class derived from ```webhookBlueprint``` is aimed to be used as a means of integrating different services.
+You provide it on initialization with a list of ```Callable``` taking in webhook payloads as a single argument, and these functions will be called upon receiving a webhook.
+Thus you can easily integrate services with this class by simply having integration happen in such a ```Callable```.
+
+#### functionWebhookBlueprint behavior
+
+Upon receiving a ```POST``` request to the / endpoint the blueprint:
+
+1. Verifies the request's validity (Optional but very recommended)
+2. Calls all functions contained within it's ```functions``` list
+3. If any returned False it returns a failure to origin.
+
 ### Customization
 
-You can easily tweak the class to your liking in two ways.
+You can easily tweak any of the classes to your liking in two ways.
 
 1. Some settings can be tweaked during blueprint instance creation.
     You can:
     - enable or disable webhook verification by providing (or not providing) a ```webhookToken```
-    - enable unit test running by providing a ```unittest.testSuite``` instance
+    - enable unit test running by providing a ```unittest.testSuite``` instance (pullerWebhookBlueprint)
     - enable logging by providing a ```logging.Logger``` instance
     - change blueprint name to avoid conflicts during blueprint registration
-    - change the command used to invoke git
-    - change the OS environment used by child git processes
+    - change the command used to invoke git (pullerWebhookBlueprint)
+    - change the OS environment used by child git processes (pullerWebhookBlueprint)
 2. More advanced changes require creating a subclass from webhookBlueprint
     This isn't that daunting.
     There are two methods in the class: ```receiveWebhook``` and ```processWebhook```.
