@@ -21,12 +21,15 @@ def verifyGithubSignature(request: Request, token:str) -> bool:
 
 class webhookBlueprint(Blueprint):
     """Wrapper over the flask blueprint that creates an endpoint for receiving and processing git webhooks. Overwrite the processWebhook method to process the webhook data."""
-    def __init__(self, webhookToken:str, tests:TestSuite | None = None, log:Logger | None = None, name:str="webhook", import_name:str=__name__, gitCommand:str="/usr/bin/git", commandEnv:dict | None = None, *args, **kwargs):
+    def __init__(self, webhookToken:str | None, tests:TestSuite | None = None, log:Logger | None = None, name:str="webhook", import_name:str=__name__, gitCommand:str="/usr/bin/git", commandEnv:dict | None = None, *args, **kwargs):
         super().__init__(name, import_name, *args, **kwargs)
+        self.log = log
+        if webhookToken is None:
+            if self.log is not None:
+                self.log.warning("No webhook token provided. THIS IS VERY UNSAFE")
         self.webhookToken = webhookToken
         self.tests = tests
         self.gitCommand = gitCommand
-        self.log = log
         if commandEnv is None:
             commandEnv = dict(GIT_SSH_COMMAND="/usr/bin/ssh")
         self.commandEnv = commandEnv
@@ -40,20 +43,21 @@ class webhookBlueprint(Blueprint):
             if self.log is not None:
                 self.log.warning(f"A request with an invalid content type: {request.content_type}")
             abort(415)
-        if GITHUB_HEADER in request.headers:
-            if not verifyGithubSignature(request, self.webhookToken):
+        if self.webhookToken is not None: #verification
+            if GITHUB_HEADER in request.headers:
+                if not verifyGithubSignature(request, self.webhookToken):
+                    if self.log is not None:
+                        self.log.warning("A request with an invalid GitHub signature")
+                    abort(401)
+            elif GITLAB_HEADER:
+                if request.headers.get(GITLAB_HEADER) != self.webhookToken:
+                    if self.log is not None:
+                        self.log.warning("A request with an invalid GitLab token")
+                    abort(401)
+            else:
                 if self.log is not None:
-                    self.log.warning("A request with an invalid GitHub signature")
-                abort(401)
-        elif GITLAB_HEADER:
-            if request.headers.get(GITLAB_HEADER) != self.webhookToken:
-                if self.log is not None:
-                    self.log.warning("A request with an invalid GitLab token")
-                abort(401)
-        else:
-            if self.log is not None:
-                self.log.warning("A request with no signature found")
-            abort(401) #no feedback, in case somebody is trying to guess the token
+                    self.log.warning("A request with no signature found")
+                abort(401) #no feedback, in case somebody is trying to guess the token
         #logs beforehand were warnings, so that messages regarding unauthorized requests can be filtered
         data = request.json
         if data is None or not isinstance(data, dict):
