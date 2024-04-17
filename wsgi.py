@@ -1,4 +1,4 @@
-from src import pullerWebhookBlueprint
+from gitWebhook import pullerWebhookBlueprint
 from flask import Flask
 import json
 

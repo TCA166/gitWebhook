@@ -1,4 +1,4 @@
-from src.webhook import webhookBlueprint
+from gitWebhook.webhook import webhookBlueprint
 from typing import Callable, Any
 
 class functionWebhookBlueprint(webhookBlueprint):

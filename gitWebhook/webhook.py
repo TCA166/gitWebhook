@@ -3,7 +3,7 @@ from hashlib import sha256
 from hmac import new as hmacNew
 from typing import Any
 from logging import Logger
-from src.abstractWebhook import gitWebhookBlueprintABC
+from gitWebhook.abstractWebhook import gitWebhookBlueprintABC
 
 GITHUB_HEADER = "X-Hub-Signature-256"
 

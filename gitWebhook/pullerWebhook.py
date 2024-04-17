@@ -1,7 +1,7 @@
 from logging import Logger
 from typing import Any
 from unittest import TestSuite
-from src.webhook import webhookBlueprint
+from gitWebhook.webhook import webhookBlueprint
 from subprocess import run
 from unittest import TestSuite, TestResult
 

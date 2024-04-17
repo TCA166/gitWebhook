@@ -1,7 +1,7 @@
 import unittest
 from flask import Request, request, Flask
-from src.webhook import verifyGithubRequest, verifyGitlabRequest, webhookBlueprint
-from src.functionWebhook import functionWebhookBlueprint
+from gitWebhook.webhook import verifyGithubRequest, verifyGitlabRequest, webhookBlueprint
+from gitWebhook.functionWebhook import functionWebhookBlueprint
 import random
 from hmac import new as hmacNew
 from hashlib import sha256

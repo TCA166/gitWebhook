@@ -1,6 +1,6 @@
 [project]
 name = "gitAppWebhook"
-version = "0.1"
+version = "0.2"
 authors = [
   { name="TCA", email="tca.youtub@gmail.com" },
 ]
@@ -19,6 +19,4 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/TCA166/gitWebhook"
 
-[options]
-package_dir = src
 
