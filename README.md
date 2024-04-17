@@ -1,4 +1,4 @@
-# githubWebhook
+# gitWebhook
 
 A Python library providing [Flask blueprints](https://flask.palletsprojects.com/en/3.0.x/blueprints/) for receiving GitHub or GitLab webhooks and acting upon them.
 The library provides webhooks allowing for automatic deployment, testing and integrations.
