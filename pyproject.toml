@@ -19,3 +19,6 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/TCA166/gitWebhook"
 
+[options]
+package_dir = src
+
