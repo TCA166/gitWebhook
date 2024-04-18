@@ -107,6 +107,8 @@ You can easily tweak any of the classes to your liking in two ways.
     - enable unit test running by providing a ```unittest.testSuite``` instance (pullerWebhookBlueprint)
     - enable logging by providing a ```logging.Logger``` instance
     - change blueprint name to avoid conflicts during blueprint registration
+    - limit the blueprints to accept webhooks only from one git app or multiple
+    - limit the blueprints to accept incoming webhooks only from whitelisted IPs
     - change the command used to invoke git (pullerWebhookBlueprint)
     - change the OS environment used by child git processes (pullerWebhookBlueprint)
 2. More advanced changes require creating a subclass from webhookBlueprint

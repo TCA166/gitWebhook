@@ -22,22 +22,39 @@ def verifyGitlabRequest(request: Request, token:str) -> bool:
     """Verify the GitLab token of a webhook request"""
     return request.headers.get(GITLAB_HEADER) == token
 
-# TODO add IP whitelisting, limiting to one git type, automatic github IP whitelisting
+def verifyBasicAuth(request: Request, token:str) -> bool:
+    """Verify the basic authorization of a webhook request"""
+    return str(request.authorization) == token
+
+# TODO add automatic github IP whitelisting
 
 class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
     """Wrapper over the flask blueprint that creates an endpoint for receiving and processing git webhooks. Overwrite the processWebhook method to process the webhook data."""
     
-    def __init__(self, webhookToken:str | None, log:Logger | None = None, name:str="webhook", *args, **kwargs):
+    def __init__(self, webhookToken:str | None, log:Logger | None = None, name:str="webhook", github:bool=True, gitlab:bool=True, gitea:bool=True, ipWhitelist:list[str] | None = None, *args, **kwargs):
         super().__init__(name, self.__class__.__name__, *args, **kwargs)
         self.log = log
         if webhookToken is None:
             if self.log is not None:
                 self.log.warning("No webhook token provided. THIS IS VERY UNSAFE")
         self.webhookToken = webhookToken
+        self.github = github
+        self.gitlab = gitlab
+        self.gitea = gitea
+        self.ipWhitelist = ipWhitelist
         self.route("/", methods=["POST"])(self.receiveWebhook)
     
     def receiveWebhook(self) -> Response:
         """Receive webhook from GitHub and process it using the processWebhook method."""
+        if self.ipWhitelist is not None:
+            if request.remote_addr is None:
+                if self.log is not None:
+                    self.log.warning("Received a request with no IP address")
+                abort(403)
+            if request.remote_addr not in self.ipWhitelist:
+                if self.log is not None:
+                    self.log.warning(f"Received a request from an unauthorized IP address: {request.remote_addr}")
+                abort(403)
         if self.log is not None:
             self.log.debug("Received a POST request to the webhook endpoint")
         #check if the content type is json
@@ -46,18 +63,18 @@ class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
                 self.log.warning(f"A request with an invalid content type: {request.content_type}")
             abort(415)
         if self.webhookToken is not None: #verification
-            if GITHUB_HEADER in request.headers:
+            if GITHUB_HEADER in request.headers and self.github:
                 if not verifyGithubRequest(request, self.webhookToken):
                     if self.log is not None:
                         self.log.warning("A request with an invalid GitHub signaturez")
                     abort(401)
-            elif GITLAB_HEADER in request.headers:
+            elif GITLAB_HEADER in request.headers and self.github:
                 if not verifyGitlabRequest(request, self.webhookToken):
                     if self.log is not None:
                         self.log.warning("A request with an invalid GitLab token")
                     abort(401)
-            elif request.authorization is not None: # basic authorization which is what Gitea uses
-                if not str(request.authorization) == self.webhookToken:
+            elif request.authorization is not None and self.gitea: # basic authorization which is what Gitea uses
+                if not verifyBasicAuth(request, self.webhookToken):
                     if self.log is not None:
                         self.log.warning("A request with an invalid basic authorization")
                     abort(401)
