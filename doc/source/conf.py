@@ -9,7 +9,7 @@
 project = 'gitWebhook'
 copyright = '2024, TCA'
 author = 'TCA'
-release = '0.2'
+release = '0.3'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

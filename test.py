@@ -141,7 +141,7 @@ class TestFunctionWebhookBlueprint(unittest.TestCase):
         self.assertEqual(resp.status_code, 401)
         
     def testProcessWebhook(self):
-        self.assertEqual(self.webhook.processWebhook({"test":"test"}), (400, "Function <lambda> returned false"))
+        self.assertEqual(self.webhook.processWebhook({"test":"test"}), (400, '{"<lambda>": false}'))
 
 class TestHooks(unittest.TestCase):
     def setUp(self) -> None:

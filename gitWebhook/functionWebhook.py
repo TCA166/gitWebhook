@@ -55,6 +55,7 @@ class functionWebhookBlueprint(webhookBlueprint):
                     if self.log is not None:
                         self.log.error(f"Function {function.__name__} returned false")
                     success = False
+                    output[function.__name__] = res
                 else:
                     if self.log is not None:
                         self.log.debug(f"Function {function.__name__} returned true")
