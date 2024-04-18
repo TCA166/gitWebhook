@@ -143,5 +143,24 @@ class TestFunctionWebhookBlueprint(unittest.TestCase):
     def testProcessWebhook(self):
         self.assertEqual(self.webhook.processWebhook({"test":"test"}), (400, "Function <lambda> returned false"))
 
+class TestHooks(unittest.TestCase):
+    def setUp(self) -> None:
+        self.webhook = webhookBlueprint(VALID_TOKEN, name="valid")
+        self.app = Flask(__name__)
+        self.app.register_blueprint(self.webhook, url_prefix="/valid")
+        self.app.config.update({"TESTING": True})
+        self.client = self.app.test_client()
+        self.hooked = False
+        return super().setUp()
+    
+    def testHook(self):
+        @self.webhook.hook
+        def hook():
+            self.hooked = True
+        request = testingRequest(VALID_TOKEN)
+        request.headers["Content-Type"] = "application/json"
+        resp = self.client.post("/valid/", headers=request.headers, data=request.data)
+        self.assertTrue(self.hooked)
+
 if __name__ == "__main__":
     unittest.main()

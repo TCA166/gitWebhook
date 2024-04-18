@@ -1,11 +1,12 @@
 from .webhook import webhookBlueprint
 from typing import Callable, Any
 from logging import Logger
+import json
 
 class functionWebhookBlueprint(webhookBlueprint):
     """A subclass of webhookBlueprint that processes the webhook data using a list of functions. The functions should return True if the webhook data is valid, and False otherwise. If the function returns a string, it will be included in the output."""
     
-    def __init__(self, webhookToken: str | None, functions: list[Callable[[dict[str, Any]], bool | str]], log:Logger | None = None, name:str="webhook", github:bool=True, gitlab:bool=True, gitea:bool=True, ipWhitelist:list[str] | None = None, *args, **kwargs):
+    def __init__(self, webhookToken: str | None, functions: list[Callable[[dict[str, Any]], bool | Any]], log:Logger | None = None, name:str="webhook", github:bool=True, gitlab:bool=True, gitea:bool=True, ipWhitelist:list[str] | None = None, *args, **kwargs):
         """Initialize the webhook blueprint with a list of functions to process the webhook data.
 
         Args:
@@ -38,24 +39,36 @@ class functionWebhookBlueprint(webhookBlueprint):
         """
         if self.log is not None:
             self.log.debug(f"Processing webhook: {data}")
-        output = []
+        success = True
+        output:dict[str, str | bool] = {}
         for function in self.functions:
-            res = function(data)
-            if isinstance(res, str):
+            try:
+                res = function(data)
+            except Exception as e:
+                output[function.__name__] = str(e)
                 if self.log is not None:
-                    self.log.debug(f"Function {function.__name__} returned a string")
-                output.append(res)
-            elif isinstance(res, bool):
+                    self.log.error(f"Function {function.__name__} raised an exception: {e}")
+                success = False
+                continue
+            if isinstance(res, bool):
                 if not res:
                     if self.log is not None:
                         self.log.error(f"Function {function.__name__} returned false")
-                    return 400, f"Function {function.__name__} returned false"
+                    success = False
                 else:
                     if self.log is not None:
                         self.log.debug(f"Function {function.__name__} returned true")
-                    output.append(str(res))
+                    output[function.__name__] = res
             else:
                 if self.log is not None:
-                    self.log.error(f"Function {function.__name__} returned an invalid type")
-                return 500, f"Function {function.__name__} returned an invalid type"
-        return 200, str(output)
+                    self.log.debug(f"Function {function.__name__} returned a string")
+                try:
+                    output[function.__name__] = str(res)
+                except Exception as e:
+                    if self.log is not None:
+                        self.log.error(f"Function {function.__name__} returned an invalid type")
+                    return 500, f"Function {function.__name__} returned an invalid type"
+        if success:
+            return 200, str(output)
+        else:
+            return 400, json.dumps(output)

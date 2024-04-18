@@ -1,7 +1,7 @@
 from flask import Blueprint, request, Response, abort, Request
 from hashlib import sha256
 from hmac import new as hmacNew
-from typing import Any
+from typing import Any, Callable
 from logging import Logger
 from .abstractWebhook import gitWebhookBlueprintABC
 
@@ -56,6 +56,7 @@ class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
         self.gitlab = gitlab
         self.gitea = gitea
         self.ipWhitelist = ipWhitelist
+        self.hooks = []
         self.route("/", methods=["POST"])(self.receiveWebhook)
     
     def receiveWebhook(self) -> Response:
@@ -96,6 +97,8 @@ class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
                     self.log.warning("A request with no signature found")
                 abort(401) #no feedback, in case somebody is trying to guess the token
         #logs beforehand were warnings, so that messages regarding unauthorized requests can be filtered
+        for hook in self.hooks:
+            hook()
         data = request.json
         if data is None or not isinstance(data, dict):
             if self.log is not None:
@@ -117,3 +120,18 @@ class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
             tuple[int, str]: HTTP return code with a message
         """
         return (200, "OK")
+    
+    def hook(self, func:Callable[..., Any]) -> Callable[..., Any]:
+        """Adds a function to the list of functions that will be called when a webhook is received.
+        This is different from what functionWebhook functions do as this function is called before the processWebhook method and the return value is not checked.
+        
+        Args:
+            func (Callable): The function to add to the list of functions that will be called when a webhook is received.
+        """
+        self.hooks.append(func)
+        def inner(*args, **kwargs):
+            print("test")
+            if self.log is not None:
+                self.log.debug("Received a POST request to a hooked function")
+            return func(*args, **kwargs)
+        return inner
