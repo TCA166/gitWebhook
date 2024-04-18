@@ -91,6 +91,25 @@ class TestWehbookBlueprint(unittest.TestCase):
         resp = self.client.post("/valid/", headers=limitedHeaders, data=request.data)
         self.assertEqual(resp.status_code, 401)
 
+    def testOriginBlocking(self):
+        request = testingRequest(VALID_TOKEN)
+        request.remote_addr = ""
+        self.webhook.ipWhitelist = ["192"]
+        resp = self.client.post("/valid/", headers=request.headers, data=request.data)
+        self.assertEqual(resp.status_code, 403)
+        
+    def testAppBlocking(self):
+        request = testingRequest(VALID_TOKEN)
+        limitedHeaders = {"X-Gitlab-Token":request.headers["X-Gitlab-Token"]}
+        limitedHeaders["Content-Type"] = "application/json"
+        self.webhook.github = False
+        resp = self.client.post("/valid/", headers=limitedHeaders, data=request.data)
+        self.assertEqual(resp.status_code, 401)
+        self.webhook.github = True
+        self.webhook.gitlab = False
+        resp = self.client.post("/valid/", headers=limitedHeaders, data=request.data)
+        self.assertEqual(resp.status_code, 400)
+    
     def testProcessWebhook(self):
         self.assertEqual(self.webhook.processWebhook({"test":"test"}), (200, "OK"))
         self.assertEqual(self.webhookNoToken.processWebhook({"test":"test"}), (200, "OK"))

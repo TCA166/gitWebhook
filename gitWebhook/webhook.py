@@ -32,6 +32,20 @@ class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
     """Wrapper over the flask blueprint that creates an endpoint for receiving and processing git webhooks. Overwrite the processWebhook method to process the webhook data."""
     
     def __init__(self, webhookToken:str | None, log:Logger | None = None, name:str="webhook", github:bool=True, gitlab:bool=True, gitea:bool=True, ipWhitelist:list[str] | None = None, *args, **kwargs):
+        """Initailize the webhook blueprint, register the recieveWebhook method as a POST endpoint.
+
+        Args:
+            webhookToken (str | None): The token used to verify the webhook. If None, no verification is done.
+            log (Logger | None, optional): Optional logger that will be used by this blueprint. Defaults to None.
+            name (str, optional): Flask blueprint name. Must be unique. Defaults to "webhook".
+            github (bool, optional): Whether the blueprint should process webhook requests from GitHub. Defaults to True.
+            gitlab (bool, optional): Whether the blueprint should process webhook requests from GitLab. Defaults to True.
+            gitea (bool, optional): Whether the blueprint should process webhook requests from Gitea or other requests using basic auth. Defaults to True.
+            ipWhitelist (list[str] | None, optional): Optional whitelist that all incoming requests will be checked against. Defaults to None.
+            args: Additional arguments to pass to the Blueprint constructor.
+            kwargs: Additional keyword arguments to pass to the Blueprint constructor.
+        """
+        
         super().__init__(name, self.__class__.__name__, *args, **kwargs)
         self.log = log
         if webhookToken is None:
@@ -45,7 +59,6 @@ class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
         self.route("/", methods=["POST"])(self.receiveWebhook)
     
     def receiveWebhook(self) -> Response:
-        """Receive webhook from GitHub and process it using the processWebhook method."""
         if self.ipWhitelist is not None:
             if request.remote_addr is None:
                 if self.log is not None:
@@ -95,5 +108,12 @@ class webhookBlueprint(Blueprint, gitWebhookBlueprintABC):
         return Response(ret[1], status=ret[0])
     
     def processWebhook(self, data:dict[str, Any]) -> tuple[int, str]:
-        """Process the webhook. Return a tuple of (status code, message)"""
+        """Process the webhook. Return a tuple of (status code, message)
+
+        Args:
+            data (dict[str, Any]): The webhook data
+        
+        Returns:
+            tuple[int, str]: HTTP return code with a message
+        """
         return (200, "OK")
