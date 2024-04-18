@@ -1,5 +1,8 @@
 # gitWebhook
 
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/gitAppWebhook)](https://pypi.org/project/gitAppWebhook/)
+[![GitHub Pages Documentation](https://img.shields.io/badge/GitHub_Pages-Documentation-blue)](https://tca166.github.io/gitWebhook/)
+
 A Python library providing [Flask blueprints](https://flask.palletsprojects.com/en/3.0.x/blueprints/) for receiving GitHub, GitLab or Gitea webhooks and acting upon them.
 The library provides webhooks allowing for automatic deployment, testing and integrations.
 However due to the open ended nature of the blueprint this behavior can be easily customized thanks to the very open ended class dependency tree.
